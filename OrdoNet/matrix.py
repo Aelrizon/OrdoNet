@@ -6,72 +6,90 @@ class Matrix:
         self.rows = rows  # number of rows
 
         if data:
-            self.data = data  # use given data if provided
+            # Use provided data (ensure it has the correct dimensions)
+            if len(data) != rows or any(len(row) != cols for row in data):
+                raise ValueError("Data dimensions do not match given rows and cols.")
+            self.data = data
         else:
-            # if no data, fill matrix with zeros
+            # If no data, fill the matrix with zeros
             self.data = [[0 for _ in range(cols)] for _ in range(rows)]
 
     def randomize(self):
-        # fill the matrix with random numbers from -1 to 1
+        # Fill the matrix with random numbers from -1 to 1
         self.data = [
             [random.uniform(-1, 1) for _ in range(self.cols)]  # for each column
-            for _ in range(self.rows)                          # for each row
+            for _ in range(self.rows)                           # for each row
         ]
 
     def show(self):
-        # print the matrix row by row
+        # Print the matrix row by row
         for row in self.data:
             print(row)
 
+    def __str__(self):
+        # Create a neat string representation of the matrix
+        return "\n".join(str(row) for row in self.data)
+
     def transpose(self):
-        # flip rows and columns
-        flipped = list(zip(*self.data))               # convert columns to rows
-        new_data = [list(row) for row in flipped]     # convert to list of lists
-        return Matrix(self.rows, self.cols, new_data) # return new transposed matrix
+        # Flip rows and columns
+        flipped = list(zip(*self.data))               # Convert columns to rows
+        new_data = [list(row) for row in flipped]     # Convert tuples to lists
+        return Matrix(self.cols, self.rows, new_data)   # Note: new shape is (cols, rows)
 
     def dot(self, other):
-        # standard matrix multiplication: row * column
+        # Standard matrix multiplication: self (rows x cols) dot other (other.rows x other.cols)
+        if self.cols != other.rows:
+            raise ValueError("Matrix dot product dimension mismatch: self.cols must equal other.rows")
+        
         result = []
-
-        for row in self.data:  # go through each row in this matrix
+        for row in self.data:  # For each row in self
             new_row = []
-            for col in zip(*other.data):  # go through each column in other matrix
+            # For each column in other (via transposition)
+            for col in zip(*other.data):
                 total = 0
-                for a, b in zip(row, col):  # multiply and sum pairs
+                for a, b in zip(row, col):  # Multiply corresponding elements and sum
                     total += a * b
-                new_row.append(total)  # add to result row
-            result.append(new_row)  # add row to final result
-
+                new_row.append(total)
+            result.append(new_row)
         return Matrix(self.rows, other.cols, result)
 
     def add(self, other):
-        # add two matrices element by element
-        new = [
-            [a + b for a, b in zip(row1, row2)]  # add each pair
+        # Element-wise addition: both matrices must have the same dimensions
+        if self.rows != other.rows or self.cols != other.cols:
+            raise ValueError("Matrix addition dimension mismatch.")
+        
+        new_data = [
+            [a + b for a, b in zip(row1, row2)]  # Add each corresponding pair
             for row1, row2 in zip(self.data, other.data)
         ]
-        return Matrix(self.rows, self.cols, new)
+        return Matrix(self.cols, self.rows, new_data)
 
     def subtract(self, other):
-        # subtract one matrix from another element by element
-        new = [
-            [a - b for a, b in zip(row1, row2)]  # subtract each pair
+        # Element-wise subtraction: both matrices must have the same dimensions
+        if self.rows != other.rows or self.cols != other.cols:
+            raise ValueError("Matrix subtraction dimension mismatch.")
+        
+        new_data = [
+            [a - b for a, b in zip(row1, row2)]  # Subtract each pair
             for row1, row2 in zip(self.data, other.data)
         ]
-        return Matrix(self.rows, self.cols, new)
+        return Matrix(self.cols, self.rows, new_data)
 
     def multiply(self, other):
-        # element-wise multiplication (Hadamard product)
-        new = [
-            [a * b for a, b in zip(row1, row2)]  # multiply each pair
+        # Element-wise multiplication (Hadamard product): matrices must have the same dimensions
+        if self.rows != other.rows or self.cols != other.cols:
+            raise ValueError("Matrix element-wise multiplication dimension mismatch.")
+        
+        new_data = [
+            [a * b for a, b in zip(row1, row2)]  # Multiply each pair
             for row1, row2 in zip(self.data, other.data)
         ]
-        return Matrix(self.rows, self.cols, new)
+        return Matrix(self.cols, self.rows, new_data)
 
     def scalar(self, number):
-        # multiply each element by a number
-        new = [
-            [a * number for a in row]  # scale each value
+        # Multiply each element by a scalar number
+        new_data = [
+            [a * number for a in row]  # Scale each value
             for row in self.data
         ]
-        return Matrix(self.rows, self.cols, new)
+        return Matrix(self.cols, self.rows, new_data)
